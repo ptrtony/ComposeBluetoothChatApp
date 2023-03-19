@@ -7,16 +7,21 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,12 +73,34 @@ class MainActivity : ComponentActivity() {
             ComposeBluetoothChatAppTheme {
                 val viewModel = viewModel<BluetoothViewModel>()
                 val state = viewModel.state.collectAsState()
+                LaunchedEffect(key1 = state.value.errorMessage) {
+                    state.value.errorMessage?.let { message ->
+                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                LaunchedEffect(key1 = state.value.isConnected) {
+                    Toast.makeText(this@MainActivity, "connected success", Toast.LENGTH_SHORT).show()
+                }
                 Surface(
                     color = MaterialTheme.colors.background
                 ) {
-                    DeviceScreen(state.value,
-                        onStartScan = viewModel::startScan,
-                        onStopScan = viewModel::stopScan)
+                    when {
+                        state.value.isConnecting -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator()
+                                Text(text = "loading...")
+                            }
+                        }
+                        else -> {
+                            DeviceScreen(state.value,
+                                onStartScan = viewModel::startScan,
+                                onStopScan = viewModel::stopScan)
+                        }
+                    }
                 }
             }
         }
