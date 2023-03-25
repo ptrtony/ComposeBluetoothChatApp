@@ -17,7 +17,9 @@ import com.mmt.composebluetoothchatapp.persentation.BluetoothUiState
 fun DeviceScreen(
     state: BluetoothUiState,
     onStartScan: () -> Unit,
-    onStopScan: () -> Unit
+    onStopScan: () -> Unit,
+    onDeviceClick:(BluetoothDevice) -> Unit,
+    onStartServer:() -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -26,6 +28,7 @@ fun DeviceScreen(
             pairedDevices = state.pairedDevices,
             scannedDevices = state.scannedDevices,
             onClick = {
+                onDeviceClick(it)
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -41,6 +44,9 @@ fun DeviceScreen(
 
             Button(onClick = onStopScan) {
                 Text(text = "Stop scan")
+            }
+            Button(onClick = onStartServer) {
+                Text(text = "Start server")
             }
         }
     }

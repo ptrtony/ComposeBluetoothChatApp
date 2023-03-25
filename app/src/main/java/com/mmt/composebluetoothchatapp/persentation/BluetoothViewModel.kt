@@ -8,6 +8,7 @@ import com.mmt.composebluetoothchatapp.domain.chat.ConnectionResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,7 +22,11 @@ class BluetoothViewModel @Inject constructor(
         bluetoothController.pairedBluetoothDevices,
         _state
     ) { scannedDevices, pairedDevices, state ->
-        state.copy(scannedDevices, pairedDevices)
+        state.copy(
+            scannedDevices,
+            pairedDevices,
+            messages = if (state.isConnected) state.messages else emptyList()
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _state.value)
 
     fun startScan() {
@@ -41,6 +46,8 @@ class BluetoothViewModel @Inject constructor(
     }
 
 
+
+
     fun disconnectFromDevice() {
         deviceConnectionFromJob?.cancel()
         bluetoothController.closeConnection()
@@ -53,11 +60,23 @@ class BluetoothViewModel @Inject constructor(
         _state.update {
             it.copy(
                 isConnecting = true
-
             )
         }
         deviceConnectionFromJob = bluetoothController.startBluetoothServer()
             .listen()
+    }
+
+    fun sendMessage(message: String) {
+        viewModelScope.launch {
+            val bluetoothMessage = bluetoothController.trySendMessage(message)
+            if (null != bluetoothMessage) {
+                _state.update {
+                    it.copy(
+                        messages = it.messages + bluetoothMessage
+                    )
+                }
+            }
+        }
     }
 
     private fun Flow<ConnectionResult>.listen(): Job {
@@ -69,6 +88,13 @@ class BluetoothViewModel @Inject constructor(
                             isConnected = true,
                             isConnecting = false,
                             errorMessage = null
+                        )
+                    }
+                }
+                is ConnectionResult.TransferSucceeded -> {
+                    _state.update {
+                        it.copy(
+                            messages = it.messages + result.message
                         )
                     }
                 }

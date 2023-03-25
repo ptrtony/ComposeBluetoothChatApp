@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mmt.composebluetoothchatapp.persentation.BluetoothViewModel
 import com.mmt.composebluetoothchatapp.persentation.component.DeviceScreen
 import com.mmt.composebluetoothchatapp.ui.theme.ComposeBluetoothChatAppTheme
+import com.mmt.composebluetoothchatapp.ui.view.ChatScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -95,10 +96,18 @@ class MainActivity : ComponentActivity() {
                                 Text(text = "loading...")
                             }
                         }
+                        state.value.isConnected -> {
+                            ChatScreen(state = state.value,
+                                onDisconnect = viewModel::disconnectFromDevice,
+                                onSendMessage = viewModel::sendMessage)
+                        }
                         else -> {
                             DeviceScreen(state.value,
                                 onStartScan = viewModel::startScan,
-                                onStopScan = viewModel::stopScan)
+                                onStopScan = viewModel::stopScan,
+                                onDeviceClick = viewModel::connectToDevice,
+                                onStartServer = viewModel::waitForIncomingConnections
+                            )
                         }
                     }
                 }
